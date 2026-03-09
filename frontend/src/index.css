@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 6% 10%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 6% 10%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 24.6 95% 53.1%;
+    --primary-foreground: 0 0% 2%;
+
+    --secondary: 240 5.2% 15%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 5.2% 15%;
+    --muted-foreground: 240 4% 46%;
+
+    --accent: 240 5.2% 15%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --success: 142.1 76.2% 36.3%;
+    --success-foreground: 0 0% 98%;
+
+    --warning: 47.9 95.8% 53.1%;
+    --warning-foreground: 0 0% 2%;
+
+    --border: 240 5.2% 18%;
+    --input: 240 5.2% 18%;
+    --ring: 24.6 95% 53.1%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 240 6% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 24.6 95% 53.1%;
+    --sidebar-primary-foreground: 0 0% 2%;
+    --sidebar-accent: 240 5.2% 15%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 5.2% 18%;
+    --sidebar-ring: 24.6 95% 53.1%;
+
+    --font-mono: 'IBM Plex Mono', monospace;
+    --font-sans: 'Inter', sans-serif;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: var(--font-sans);
+  }
+
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+}
+
+@layer utilities {
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(to right, hsl(240 5.2% 18% / 0.3) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(240 5.2% 18% / 0.3) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+}
