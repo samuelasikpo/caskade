@@ -2,25 +2,33 @@ import { useState } from 'react';
 import { X, AlertTriangle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useWalletStore } from '@/store/walletStore';
+import { useMintSbtc } from '@/hooks/useVaultWrite';
+import { toast } from '@/hooks/use-toast';
 
 const STORAGE_KEY = 'caskade-faucet-dismissed';
 
 export function FaucetPanel() {
   const [dismissed, setDismissed] = useState(() => localStorage.getItem(STORAGE_KEY) === 'true');
   const [amount, setAmount] = useState('100');
-  const [minting, setMinting] = useState(false);
-  const { network } = useWalletStore();
+  const { network, address } = useWalletStore();
+  const mintSbtc = useMintSbtc();
 
   if (dismissed || network !== 'testnet') return null;
 
   const handleMint = () => {
     const mintAmount = parseFloat(amount) || 0;
-    if (mintAmount <= 0) return;
-    setMinting(true);
-    setTimeout(() => {
-      useWalletStore.setState((s) => ({ sbtcBalance: s.sbtcBalance + mintAmount }));
-      setMinting(false);
-    }, 1000);
+    if (mintAmount <= 0 || !address) return;
+    mintSbtc.mutate(
+      { amount: mintAmount, recipient: address },
+      {
+        onSuccess: () => {
+          toast({ title: 'Mint submitted', description: `${mintAmount} mock sBTC mint transaction sent.` });
+        },
+        onError: (err) => {
+          toast({ title: 'Mint failed', description: err.message, variant: 'destructive' });
+        },
+      }
+    );
   };
 
   const handleDismiss = () => {
@@ -52,8 +60,8 @@ export function FaucetPanel() {
             placeholder="Amount"
           />
         </div>
-        <Button size="sm" onClick={handleMint} disabled={minting || (parseFloat(amount) || 0) <= 0}>
-          {minting ? 'Minting…' : 'Mint Test sBTC'}
+        <Button size="sm" onClick={handleMint} disabled={mintSbtc.isPending || !address || (parseFloat(amount) || 0) <= 0}>
+          {mintSbtc.isPending ? 'Minting…' : 'Mint Test sBTC'}
         </Button>
       </div>
       <a

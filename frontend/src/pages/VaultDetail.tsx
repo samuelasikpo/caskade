@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
-import { VAULTS, TRANSACTIONS, USER_POSITIONS, generateSharePriceHistory } from '@/data/mockData';
+import { generateSharePriceHistory } from '@/data/mockData';
 import { useWalletStore } from '@/store/walletStore';
+import { useVaultData } from '@/hooks/useVaultRead';
+import { useBalances } from '@/hooks/useBalances';
+import { useTransactions } from '@/hooks/useTransactions';
+import { useDeposit, useWithdraw } from '@/hooks/useVaultWrite';
+import { VAULT_REGISTRY } from '@/config/vaults';
 import { StatCard } from '@/components/StatCard';
 import { AddressBadge } from '@/components/AddressBadge';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -21,8 +26,16 @@ const TIME_RANGES = ['7D', '30D', '90D', 'ALL'] as const;
 
 export default function VaultDetail() {
   const { id } = useParams<{ id: string }>();
-  const vault = VAULTS.find(v => v.id === id);
-  const { sbtcBalance } = useWalletStore();
+  const vault = VAULT_REGISTRY.find(v => v.id === id);
+  const { address } = useWalletStore();
+  const { data: vaultData } = useVaultData(id || '');
+  const { data: balances } = useBalances(address);
+  const { data: txHistory } = useTransactions(address);
+  const deposit = useDeposit();
+  const withdraw = useWithdraw();
+
+  const sbtcBalance = balances?.sbtcBalance ?? 0;
+  const userShares = balances?.shareBalances[id || ''] ?? 0;
 
   const [timeRange, setTimeRange] = useState<typeof TIME_RANGES[number]>('30D');
   const [depositAmount, setDepositAmount] = useState('');
@@ -39,32 +52,64 @@ export default function VaultDetail() {
 
   if (!vault) return <Navigate to="/vaults" replace />;
 
-  const position = USER_POSITIONS.find(p => p.vaultId === vault.id);
-  const vaultTxs = TRANSACTIONS.filter(t => t.vaultId === vault.id).slice(0, 10);
+  const tvl = vaultData?.tvl ?? 0;
+  const sharePrice = vaultData?.sharePrice ?? 0;
+  const totalShares = vaultData?.totalShares ?? 0;
+  const apy = vaultData?.apy ?? 0;
+  const depositCap = vaultData?.depositCap ?? 0;
+  const totalDeposited = vaultData?.totalDeposited ?? 0;
+  const totalYieldHarvested = vaultData?.totalYieldHarvested ?? 0;
+  const vaultTxs = (txHistory || []).filter(t => t.vaultId === vault.id).slice(0, 10);
   const days = timeRange === '7D' ? 7 : timeRange === '30D' ? 30 : timeRange === '90D' ? 90 : 365;
   const chartData = generateSharePriceHistory(days);
 
   const depositNum = parseFloat(depositAmount) || 0;
   const withdrawNum = parseFloat(withdrawAmount) || 0;
 
-  const effectiveSharePrice = vault.sharePrice === 0 ? 1 : vault.sharePrice;
+  const effectiveSharePrice = sharePrice === 0 ? 1 : sharePrice;
   const sharesToReceive = depositNum / effectiveSharePrice;
   const sbtcToReceive = withdrawNum * effectiveSharePrice;
 
-  const remainingCap = vault.depositCap - vault.totalDeposited;
+  const remainingCap = depositCap - totalDeposited;
   const exceedsCap = depositNum > remainingCap;
 
   const handleAction = (type: 'deposit' | 'withdraw') => {
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      const msg = type === 'deposit' ? 'Deposit submitted' : 'Withdrawal submitted';
-      setSuccessMessage(msg);
-      toast({ title: msg, description: 'Transaction is being processed on Stacks testnet.' });
-      if (type === 'deposit') setDepositAmount('');
-      else setWithdrawAmount('');
-      setTimeout(() => setSuccessMessage(null), 3000);
-    }, 1500);
+    if (type === 'deposit') {
+      deposit.mutate(
+        { vaultId: vault.id, amount: depositNum },
+        {
+          onSuccess: () => {
+            setLoading(false);
+            setSuccessMessage('Deposit submitted');
+            toast({ title: 'Deposit submitted', description: 'Transaction is being processed on Stacks testnet.' });
+            setDepositAmount('');
+            setTimeout(() => setSuccessMessage(null), 3000);
+          },
+          onError: (err) => {
+            setLoading(false);
+            toast({ title: 'Deposit failed', description: err.message, variant: 'destructive' });
+          },
+        }
+      );
+    } else {
+      withdraw.mutate(
+        { vaultId: vault.id, shares: withdrawNum },
+        {
+          onSuccess: () => {
+            setLoading(false);
+            setSuccessMessage('Withdrawal submitted');
+            toast({ title: 'Withdrawal submitted', description: 'Transaction is being processed on Stacks testnet.' });
+            setWithdrawAmount('');
+            setTimeout(() => setSuccessMessage(null), 3000);
+          },
+          onError: (err) => {
+            setLoading(false);
+            toast({ title: 'Withdrawal failed', description: err.message, variant: 'destructive' });
+          },
+        }
+      );
+    }
   };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
