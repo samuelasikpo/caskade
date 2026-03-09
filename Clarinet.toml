@@ -1,0 +1,45 @@
+[project]
+name = "caskade"
+description = "Composable vault standard for sBTC on Stacks"
+authors = []
+telemetry = false
+cache_dir = "./.cache"
+
+[[project.requirements]]
+contract_id = "SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sip-010-trait-ft-standard"
+
+[contracts.mock-sbtc]
+path = "contracts/mock-sbtc.clar"
+clarity_version = 4
+epoch = "latest"
+
+[contracts.vault-trait]
+path = "contracts/vault-trait.clar"
+clarity_version = 4
+epoch = "latest"
+
+[contracts.sbtc-vault]
+path = "contracts/sbtc-vault.clar"
+clarity_version = 4
+epoch = "latest"
+
+[contracts.auto-compound-vault]
+path = "contracts/auto-compound-vault.clar"
+clarity_version = 4
+epoch = "latest"
+
+[repl.analysis]
+passes = ["check_checker"]
+check_checker = { trusted_sender = false, trusted_caller = false, callee_filter = false }
+
+[repl.remote_data]
+enabled = false
+api_url = "https://api.hiro.so"
+
+# Check-checker settings:
+# trusted_sender: if true, inputs are trusted after tx_sender has been checked.
+# trusted_caller: if true, inputs are trusted after contract-caller has been checked.
+# callee_filter: if true, untrusted data may be passed into a private function without a
+# warning, if it gets checked inside. This check will also propagate up to the
+# caller.
+# More informations: https://www.hiro.so/blog/new-safety-checks-in-clarinet
