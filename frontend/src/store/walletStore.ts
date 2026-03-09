@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { showConnect } from '@stacks/connect';
+import { connect as stacksConnect, disconnect as stacksDisconnect, isConnected as stacksIsConnected } from '@stacks/connect';
 
 interface WalletState {
   address: string | null;
@@ -17,26 +17,27 @@ export const useWalletStore = create<WalletState>()(
       address: null,
       connected: false,
       network: 'testnet',
-      connect: () => {
-        showConnect({
-          appDetails: {
-            name: 'Caskade',
-            icon: window.location.origin + '/favicon.ico',
-          },
-          onFinish: (data) => {
-            const address = data.userSession.loadUserData().profile.stxAddress.testnet;
-            set({ connected: true, address });
-          },
-          onCancel: () => {
-            // user closed the wallet popup
-          },
-        });
+      connect: async () => {
+        try {
+          const response = await stacksConnect();
+          // Find the STX address from the response
+          const stxEntry = response.addresses.find(
+            (a: { symbol: string }) => a.symbol === 'STX'
+          );
+          if (stxEntry) {
+            set({ connected: true, address: stxEntry.address });
+          }
+        } catch {
+          // user cancelled or wallet not available
+        }
       },
-      disconnect: () =>
+      disconnect: () => {
+        stacksDisconnect();
         set({
           connected: false,
           address: null,
-        }),
+        });
+      },
       setAddress: (address: string) => set({ address, connected: true }),
     }),
     { name: 'caskade-wallet' }
