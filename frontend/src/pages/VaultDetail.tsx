@@ -149,7 +149,7 @@ export default function VaultDetail() {
                     <span className="text-[10px] text-muted-foreground">Live</span>
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground">{vault.description}</p>
+                <p className="text-sm text-muted-foreground">Composable sBTC vault on Stacks</p>
               </div>
             </div>
             <div className="mt-2">
@@ -164,10 +164,10 @@ export default function VaultDetail() {
             </div>
           ) : (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 animate-fade-in">
-              <StatCard label="TVL" value={`${vault.tvl.toFixed(3)} sBTC`} />
+              <StatCard label="TVL" value={`${tvl.toFixed(3)} sBTC`} />
               <StatCard label="Share Price" value={effectiveSharePrice.toFixed(4)} />
-              <StatCard label="Total Shares" value={vault.totalShares.toFixed(2)} />
-              <StatCard label="APY" value={`${vault.apy.toFixed(2)}%`} trend="up" />
+              <StatCard label="Total Shares" value={totalShares.toFixed(2)} />
+              <StatCard label="APY" value={`${apy.toFixed(2)}%`} trend="up" />
             </div>
           )}
 
@@ -219,11 +219,11 @@ export default function VaultDetail() {
             </div>
             <div className="divide-y divide-border">
               {[
-                ['Underlying Asset', vault.underlyingAsset],
+                ['Underlying Asset', 'mock-sbtc'],
                 ['Share Token', vault.shareToken],
-                ['Deposit Cap', `${vault.depositCap} sBTC`],
-                ['Utilization', `${((vault.totalDeposited / vault.depositCap) * 100).toFixed(1)}%`],
-                ['Total Yield Harvested', `${vault.totalYieldHarvested.toFixed(3)} sBTC`],
+                ['Deposit Cap', `${depositCap} sBTC`],
+                ['Utilization', `${depositCap > 0 ? ((totalDeposited / depositCap) * 100).toFixed(1) : '0.0'}%`],
+                ['Total Yield Harvested', `${totalYieldHarvested.toFixed(3)} sBTC`],
               ].map(([label, val]) => (
                 <div key={label} className="flex items-center justify-between px-4 py-3">
                   <span className="text-xs text-muted-foreground">{label}</span>
@@ -231,13 +231,13 @@ export default function VaultDetail() {
                 </div>
               ))}
               <div className="flex items-center justify-between px-4 py-3">
-                <span className="text-xs text-muted-foreground">Contract Owner</span>
-                <AddressBadge address={vault.contractOwner} explorerLink />
+                <span className="text-xs text-muted-foreground">Contract Address</span>
+                <AddressBadge address={vault.contractAddress} explorerLink />
               </div>
             </div>
           </div>
 
-          {vault.sharePrice === 0 && (
+          {sharePrice === 0 && (
             <div className="rounded-md border border-border bg-secondary p-3">
               <p className="text-xs text-muted-foreground">
                 This vault has no deposits yet. The first depositor sets the initial share price at a <span className="font-mono text-foreground">1:1</span> ratio.
@@ -320,7 +320,7 @@ export default function VaultDetail() {
                       <span className="text-muted-foreground">Exchange rate</span>
                       <span className="font-mono text-foreground">
                         1 sBTC = {(1 / effectiveSharePrice).toFixed(4)} {vault.shareToken}
-                        {vault.sharePrice === 0 && <span className="text-muted-foreground ml-1">(1:1)</span>}
+                        {sharePrice === 0 && <span className="text-muted-foreground ml-1">(1:1)</span>}
                       </span>
                     </div>
                   </div>
@@ -337,7 +337,7 @@ export default function VaultDetail() {
               <TabsContent value="withdraw" className="p-4 space-y-4">
                 {loading && <PendingTxBanner />}
 
-                <AmountInput value={withdrawAmount} onChange={setWithdrawAmount} maxAmount={position?.sharesHeld || 0} symbol={vault.shareToken} label="Withdraw Shares" />
+                <AmountInput value={withdrawAmount} onChange={setWithdrawAmount} maxAmount={userShares} symbol={vault.shareToken} label="Withdraw Shares" />
                 {withdrawNum > 0 && (
                   <div className="space-y-2 rounded-md bg-secondary p-3">
                     <div className="flex justify-between text-xs">
@@ -352,7 +352,7 @@ export default function VaultDetail() {
                 )}
                 <Button
                   className="w-full h-11 text-sm font-semibold"
-                  disabled={withdrawNum <= 0 || withdrawNum > (position?.sharesHeld || 0) || loading}
+                  disabled={withdrawNum <= 0 || withdrawNum > userShares || loading}
                   onClick={() => handleAction('withdraw')}
                 >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Withdraw'}
