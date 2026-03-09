@@ -1,5 +1,6 @@
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { LayoutDashboard, Vault, PieChart, ArrowLeftRight, LogOut } from 'lucide-react';
+import { CaskadeLogo } from '@/components/CaskadeLogo';
 import { useWalletStore } from '@/store/walletStore';
 import { Button } from '@/components/ui/button';
 import { NetworkBanner } from '@/components/NetworkBanner';
@@ -25,9 +26,7 @@ export function AppLayout() {
       {/* Desktop Top Nav */}
       <header className="sticky top-0 z-50 hidden md:flex h-16 items-center border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
         <Link to="/" className="flex items-center gap-2 mr-12">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10">
-            <span className="text-sm font-bold text-primary font-mono">C</span>
-          </div>
+          <CaskadeLogo size={28} />
           <span className="text-lg font-bold tracking-tight text-foreground">Caskade</span>
         </Link>
         <nav className="flex items-center gap-1">
@@ -62,9 +61,7 @@ export function AppLayout() {
       {/* Mobile Top Bar */}
       <header className="sticky top-0 z-50 flex md:hidden h-14 items-center justify-between border-b border-border bg-background/95 backdrop-blur px-4">
         <Link to="/" className="flex items-center gap-1.5">
-          <div className="flex h-6 w-6 items-center justify-center rounded bg-primary/10">
-            <span className="text-xs font-bold text-primary font-mono">C</span>
-          </div>
+          <CaskadeLogo size={24} />
           <span className="text-base font-bold tracking-tight text-foreground">Caskade</span>
         </Link>
         <div className="flex items-center gap-2">

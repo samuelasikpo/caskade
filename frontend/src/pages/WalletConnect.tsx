@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useWalletStore } from '@/store/walletStore';
+import { CaskadeLogo } from '@/components/CaskadeLogo';
 import { Button } from '@/components/ui/button';
 import { Wallet, Shield, Zap, BarChart3 } from 'lucide-react';
 
@@ -21,9 +22,9 @@ export default function WalletConnect() {
       <div className="relative z-10 w-full max-w-md text-center animate-fade-in">
         {/* Brand */}
         <div className="mb-8">
-          <div className="relative inline-flex items-center justify-center h-14 w-14 rounded-xl bg-primary/10 border border-primary/20 mb-4">
+          <div className="relative inline-flex items-center justify-center mb-4">
             <div className="absolute inset-0 rounded-xl bg-primary/10 blur-xl" />
-            <span className="text-2xl font-bold text-primary font-mono relative z-10">C</span>
+            <CaskadeLogo size={56} className="relative z-10" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">Caskade</h1>
           <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
