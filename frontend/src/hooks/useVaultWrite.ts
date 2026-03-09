@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { openContractCall } from '@stacks/connect';
-import { uintCV, principalCV } from '@stacks/transactions';
+import { request } from '@stacks/connect';
+import { Cl } from '@stacks/transactions';
 import { DEPLOYER } from '@/config/contracts';
 import { getVaultById } from '@/config/vaults';
 import { SBTC_DECIMALS } from '@/lib/constants';
@@ -29,27 +29,20 @@ export function useDeposit() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ vaultId, amount }: DepositParams) => {
+    mutationFn: async ({ vaultId, amount }: DepositParams) => {
       const vault = getVaultById(vaultId);
       if (!vault) throw new Error('Vault not found');
 
       const amountSats = Math.floor(amount * UNIT);
 
-      return new Promise<{ txId: string; vaultId: string; amount: number }>((resolve, reject) => {
-        openContractCall({
-          contractAddress: DEPLOYER,
-          contractName: vault.contractName,
-          functionName: 'deposit',
-          functionArgs: [uintCV(amountSats)],
-          network: 'testnet',
-          onFinish: (data) => {
-            resolve({ txId: data.txId, vaultId, amount });
-          },
-          onCancel: () => {
-            reject(new Error('Transaction cancelled by user'));
-          },
-        });
+      const result = await request('stx_callContract', {
+        contract: `${DEPLOYER}.${vault.contractName}`,
+        functionName: 'deposit',
+        functionArgs: [Cl.uint(amountSats)],
+        network: 'testnet',
       });
+
+      return { txId: result.txid, vaultId, amount };
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['vault-data', variables.vaultId] });
@@ -66,27 +59,20 @@ export function useWithdraw() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ vaultId, shares }: WithdrawParams) => {
+    mutationFn: async ({ vaultId, shares }: WithdrawParams) => {
       const vault = getVaultById(vaultId);
       if (!vault) throw new Error('Vault not found');
 
       const sharesSats = Math.floor(shares * UNIT);
 
-      return new Promise<{ txId: string; vaultId: string; shares: number }>((resolve, reject) => {
-        openContractCall({
-          contractAddress: DEPLOYER,
-          contractName: vault.contractName,
-          functionName: 'withdraw',
-          functionArgs: [uintCV(sharesSats)],
-          network: 'testnet',
-          onFinish: (data) => {
-            resolve({ txId: data.txId, vaultId, shares });
-          },
-          onCancel: () => {
-            reject(new Error('Transaction cancelled by user'));
-          },
-        });
+      const result = await request('stx_callContract', {
+        contract: `${DEPLOYER}.${vault.contractName}`,
+        functionName: 'withdraw',
+        functionArgs: [Cl.uint(sharesSats)],
+        network: 'testnet',
       });
+
+      return { txId: result.txid, vaultId, shares };
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['vault-data', variables.vaultId] });
@@ -103,24 +89,17 @@ export function useMintSbtc() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ amount, recipient }: MintParams) => {
+    mutationFn: async ({ amount, recipient }: MintParams) => {
       const amountSats = Math.floor(amount * UNIT);
 
-      return new Promise<{ txId: string }>((resolve, reject) => {
-        openContractCall({
-          contractAddress: DEPLOYER,
-          contractName: 'mock-sbtc',
-          functionName: 'mint',
-          functionArgs: [uintCV(amountSats), principalCV(recipient)],
-          network: 'testnet',
-          onFinish: (data) => {
-            resolve({ txId: data.txId });
-          },
-          onCancel: () => {
-            reject(new Error('Transaction cancelled by user'));
-          },
-        });
+      const result = await request('stx_callContract', {
+        contract: `${DEPLOYER}.mock-sbtc`,
+        functionName: 'mint',
+        functionArgs: [Cl.uint(amountSats), Cl.standardPrincipal(recipient)],
+        network: 'testnet',
       });
+
+      return { txId: result.txid };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['balances'] });
