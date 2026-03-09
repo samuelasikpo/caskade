@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { USER_POSITIONS, VAULTS } from '@/data/mockData';
+import { VAULT_REGISTRY } from '@/config/vaults';
+import { useWalletStore } from '@/store/walletStore';
+import { useBalances } from '@/hooks/useBalances';
+import { useVaultData } from '@/hooks/useVaultRead';
 import { StatCard } from '@/components/StatCard';
 import { SkeletonStatCard, SkeletonTable } from '@/components/SkeletonCard';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -10,21 +13,35 @@ import { formatUsd } from '@/lib/format';
 
 const VAULT_COLORS = ['hsl(24.6, 95%, 53.1%)', 'hsl(142.1, 76.2%, 36.3%)'];
 
+function useAllVaultData() {
+  const sbtc = useVaultData('sbtc-vault');
+  const auto = useVaultData('auto-compound-vault');
+  return {
+    'sbtc-vault': sbtc.data,
+    'auto-compound-vault': auto.data,
+  };
+}
+
 export default function Portfolio() {
-  const [loading, setLoading] = useState(true);
+  const { address } = useWalletStore();
+  const { data: balances, isLoading: loading } = useBalances(address);
+  const vaultDataMap = useAllVaultData();
 
   useEffect(() => {
     document.title = 'Portfolio — Caskade';
-    const t = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(t);
   }, []);
 
-  const positions = USER_POSITIONS.map((pos) => {
-    const vault = VAULTS.find(v => v.id === pos.vaultId)!;
-    const assetValue = pos.sharesHeld * pos.sharePrice;
-    const pnl = assetValue - pos.depositedAmount;
-    return { ...pos, vault, assetValue, pnl };
-  });
+  const shareBalances = balances?.shareBalances || {};
+
+  const positions = VAULT_REGISTRY
+    .map((v) => {
+      const shares = shareBalances[v.id] ?? 0;
+      const vd = vaultDataMap[v.id as keyof typeof vaultDataMap];
+      const sp = vd?.sharePrice ?? 1;
+      const assetValue = shares * sp;
+      return { vaultId: v.id, vaultName: v.name, sharesHeld: shares, sharePrice: sp, assetValue, pnl: 0 };
+    })
+    .filter((p) => p.sharesHeld > 0);
 
   const totalValue = positions.reduce((s, p) => s + p.assetValue, 0);
   const totalPnl = positions.reduce((s, p) => s + p.pnl, 0);
@@ -49,12 +66,12 @@ export default function Portfolio() {
         </div>
       )}
 
-      {!loading && (
+      {!loading && positions.length > 0 && (
         <div className="rounded-lg border border-border bg-card p-4 animate-fade-in">
           <h2 className="text-sm font-semibold text-foreground mb-3">Allocation</h2>
           <div className="flex rounded-full overflow-hidden h-3 bg-secondary">
             {positions.map((pos, i) => {
-              const pct = (pos.assetValue / totalValue) * 100;
+              const pct = totalValue > 0 ? (pos.assetValue / totalValue) * 100 : 0;
               return (
                 <Tooltip key={pos.vaultId}>
                   <TooltipTrigger asChild>
@@ -75,7 +92,7 @@ export default function Portfolio() {
             {positions.map((pos, i) => (
               <div key={pos.vaultId} className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: VAULT_COLORS[i] }} />
-                <span className="text-[11px] text-muted-foreground">{pos.vaultName} ({((pos.assetValue / totalValue) * 100).toFixed(1)}%)</span>
+                <span className="text-[11px] text-muted-foreground">{pos.vaultName} ({totalValue > 0 ? ((pos.assetValue / totalValue) * 100).toFixed(1) : '0.0'}%)</span>
               </div>
             ))}
           </div>
@@ -84,6 +101,10 @@ export default function Portfolio() {
 
       {loading ? (
         <SkeletonTable rows={2} />
+      ) : positions.length === 0 ? (
+        <div className="rounded-lg border border-border bg-card p-8 text-center animate-fade-in">
+          <p className="text-sm text-muted-foreground">No positions yet. <Link to="/vaults" className="text-primary hover:underline">Explore vaults</Link> to get started.</p>
+        </div>
       ) : (
         <div className="rounded-lg border border-border bg-card animate-fade-in">
           <div className="p-4 border-b border-border">
@@ -96,13 +117,12 @@ export default function Portfolio() {
                 <TableHead className="text-[11px] uppercase tracking-wider text-right">Shares</TableHead>
                 <TableHead className="text-[11px] uppercase tracking-wider text-right hidden sm:table-cell">Share Price</TableHead>
                 <TableHead className="text-[11px] uppercase tracking-wider text-right">Asset Value</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-wider text-right">P&L</TableHead>
                 <TableHead className="text-[11px] uppercase tracking-wider text-right hidden sm:table-cell">% Portfolio</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {positions.map((pos) => {
-                const pct = (pos.assetValue / totalValue) * 100;
+                const pct = totalValue > 0 ? (pos.assetValue / totalValue) * 100 : 0;
                 return (
                   <TableRow key={pos.vaultId}>
                     <TableCell>
@@ -111,9 +131,6 @@ export default function Portfolio() {
                     <TableCell className="text-right font-mono text-sm">{pos.sharesHeld.toFixed(4)}</TableCell>
                     <TableCell className="text-right font-mono text-sm hidden sm:table-cell">{pos.sharePrice.toFixed(4)}</TableCell>
                     <TableCell className="text-right font-mono text-sm">{pos.assetValue.toFixed(4)} <span className="text-muted-foreground">sBTC</span></TableCell>
-                    <TableCell className={`text-right font-mono text-sm ${pos.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
-                      {pos.pnl >= 0 ? '+' : ''}{pos.pnl.toFixed(4)}
-                    </TableCell>
                     <TableCell className="text-right font-mono text-sm hidden sm:table-cell">{pct.toFixed(1)}%</TableCell>
                   </TableRow>
                 );

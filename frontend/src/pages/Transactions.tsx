@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
-import { TRANSACTIONS, VAULTS } from '@/data/mockData';
+import { VAULT_REGISTRY } from '@/config/vaults';
+import { useWalletStore } from '@/store/walletStore';
+import { useTransactions } from '@/hooks/useTransactions';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,21 +16,23 @@ export default function Transactions() {
   const [vaultFilter, setVaultFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
+
+  const { address } = useWalletStore();
+  const { data: txData, isLoading: loading } = useTransactions(address);
 
   useEffect(() => {
     document.title = 'Transactions — Caskade';
-    const t = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(t);
   }, []);
 
+  const allTx = txData || [];
+
   const filtered = useMemo(() => {
-    return TRANSACTIONS.filter((tx) => {
+    return allTx.filter((tx) => {
       if (vaultFilter !== 'all' && tx.vaultId !== vaultFilter) return false;
       if (typeFilter !== 'all' && tx.type !== typeFilter) return false;
       return true;
     });
-  }, [vaultFilter, typeFilter]);
+  }, [allTx, vaultFilter, typeFilter]);
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -53,7 +57,7 @@ export default function Transactions() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Vaults</SelectItem>
-            {VAULTS.map((v) => (
+            {VAULT_REGISTRY.map((v) => (
               <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
             ))}
           </SelectContent>
