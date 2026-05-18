@@ -25,3 +25,6 @@
 
     ;; Converts an amount of underlying assets to the equivalent vault shares.
     (convert-to-shares (uint) (response uint uint))
+
+    ;; Converts an amount of vault shares to the equivalent underlying assets.
+    (convert-to-assets (uint) (response uint uint))
