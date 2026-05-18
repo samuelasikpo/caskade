@@ -28,3 +28,6 @@
 
     ;; Converts an amount of vault shares to the equivalent underlying assets.
     (convert-to-assets (uint) (response uint uint))
+
+    ; Returns the maximum amount of underlying assets a principal can deposit.
+    (get-max-deposit (principal) (response uint uint))
