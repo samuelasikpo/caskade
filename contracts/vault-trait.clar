@@ -31,3 +31,6 @@
 
     ; Returns the maximum amount of underlying assets a principal can deposit.
     (get-max-deposit (principal) (response uint uint))
+
+    ;; Returns the maximum amount of underlying assets a principal can deposit.
+    (get-max-deposit (principal) (response uint uint))
