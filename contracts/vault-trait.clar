@@ -4,3 +4,7 @@
 ;; Any protocol can build yield strategies on top of this trait.
 
 (define-trait vault-trait
+  (
+    ;; Deposit underlying assets (sBTC) and mint vault shares to the sender.
+    ;; Returns the number of shares minted.
+    (deposit (uint) (response uint uint))
