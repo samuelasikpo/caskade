@@ -13,3 +13,6 @@
     ;; Takes the number of shares to redeem.
     ;; Returns the amount of underlying assets returned.
     (withdraw (uint) (response uint uint))
+
+    ;; Returns the vault share balance for a given principal.
+    (get-shares-of (principal) (response uint uint))
