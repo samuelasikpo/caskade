@@ -16,3 +16,6 @@
 
     ;; Returns the vault share balance for a given principal.
     (get-shares-of (principal) (response uint uint))
+
+    ;; Returns the total underlying assets held by the vault.
+    (get-total-assets () (response uint uint))
