@@ -120,3 +120,4 @@
 
 (define-public (caskade-reward
     (recipient principal)
+    (amount uint)
