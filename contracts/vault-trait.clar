@@ -19,3 +19,6 @@
 
     ;; Returns the total underlying assets held by the vault.
     (get-total-assets () (response uint uint))
+
+    ;; Returns the total vault shares in circulation.
+    (get-total-shares () (response uint uint))
