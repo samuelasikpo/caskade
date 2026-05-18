@@ -22,3 +22,6 @@
 
     ;; Returns the total vault shares in circulation.
     (get-total-shares () (response uint uint))
+
+    ;; Converts an amount of underlying assets to the equivalent vault shares.
+    (convert-to-shares (uint) (response uint uint))
