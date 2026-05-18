@@ -119,3 +119,4 @@
 ;; The protocol owner does not pay fees.
 
 (define-public (caskade-reward
+    (recipient principal)
