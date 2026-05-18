@@ -121,3 +121,4 @@
 (define-public (caskade-reward
     (recipient principal)
     (amount uint)
+    (message (string-utf8 280))
